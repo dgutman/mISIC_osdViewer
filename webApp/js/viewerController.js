@@ -50,3 +50,21 @@ export function addShim(index, viewer, layersContainer) {
     ySlider.addEventListener('input', update);
 }
 
+
+
+export function createRectangle(overlay, x, y, width, height, color, callback) {
+    var rect = DSA.createSVGElement('rect', overlay.node(), {
+        x: x,
+        y: y,
+        width: width,
+        height: height,
+        stroke: color,
+        fill: 'none',
+        'stroke-width': 0.005,
+        'pointer-events': 'all'
+    });
+
+    rect.addEventListener('click', callback);
+
+    return rect;
+}

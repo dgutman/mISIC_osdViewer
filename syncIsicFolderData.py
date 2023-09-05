@@ -1,11 +1,13 @@
 import girder_client
 import os
 
-gc = girder_client.GirderClient(apiUrl="https://wsi-deid.pathology.emory.edu/api/v1")
+DSA_API_URL = "https://candygram.neurology.emory.edu/api/v1"
+
+gc = girder_client.GirderClient(apiUrl=DSA_API_URL)
 apiKeyName = "WSIDeID_APIKEY"
+apiKeyName = "CDG_APIKEY"
 DSAKEY = os.getenv(apiKeyName)
 gc.authenticate(apiKey=DSAKEY)
-
 
 base_path = "/Users/dagutman/devel/mISIC/data/1.2.840.114434.000.10961822336373670458931928005632388805629"
 directories = [
@@ -76,3 +78,6 @@ for i in imageList:
             gc.post(f'item/{i["_id"]}/tiles')
         except:
             pass
+
+
+### interesting.. if # is in the name it seems to be weird

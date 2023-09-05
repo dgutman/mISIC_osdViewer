@@ -1,0 +1,4 @@
+.DS_Store
+.pyenv/
+node_modules/
+data/
