@@ -1,0 +1,77 @@
+html {
+    box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+    box-sizing: inherit;
+}
+
+html,
+body,
+.page-wrapper {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+}
+
+.top-nav {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 60px;
+    width: 80%;
+    background: #eee;
+    padding: 5px;
+}
+
+.side-nav {
+    position: absolute;
+    left: 0;
+    top: 60px;
+    bottom: 0;
+    width: 400px;
+    padding: 5px;
+    background-color: #eee;
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+
+.layer-slider {
+    width: 100%;
+}
+
+.viewer-wrapper {
+    display: flex;
+    flex-direction: row;
+    /* Define flex direction as row to align viewer-container and side-nav side by side */
+    position: absolute;
+    left: 400px;
+    /* Adjusted to make space for side-nav */
+    top: 60px;
+    right: 0;
+    bottom: 0;
+}
+
+.viewer-container {
+    flex: 1;
+    /* Adjusted to occupy the remaining space in viewer-wrapper */
+    min-width: 0;
+    /* Prevent flex items from growing beyond the container */
+    background-color: #c0c0c0;
+    /* Adding a background color to visually differentiate the containers */
+}
+
+.side-nav .overview-container {
+    position: absolute;
+    /* Making it absolute to position it at the bottom of side-nav */
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    /* Taking the full width of side-nav */
+    height: 400px;
+    /* Specify a fixed height for the overview container */
+    background-color: #f0f0f0;
+    /* Adding a background color to visually differentiate the containers */
+}
