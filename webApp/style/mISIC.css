@@ -84,3 +84,13 @@ body,
     display: none;
     pointer-events: none;
 }
+
+.compact-p {
+    margin-bottom: 0;
+    margin-top: 0;
+}
+
+.compact-ul {
+    margin-top: 0;
+    margin-bottom: 0;
+}

@@ -18,10 +18,44 @@ function mouseMoveHandler(event) {
   }
 }
 
-function transformCoordinates(coord) {
-  return [coord[0] / 100000, (100000 - coord[1]) / 100000];
+function handleMouseOver(d, i, nodes) {
+  var node = nodes[i];
+  //  d3.select(node).attr('stroke', 'white');
+
+  let currentRCMViewData = JSON.parse(d3.select(node).attr('layerInfo'));
+
+  let formattedData = formatData(currentRCMViewData);
+
+  // Now, insert the formattedData into a DIV with an ID of 'outputDiv'
+  document.getElementById('rcmViewInfo').innerHTML = formattedData;
+
 }
 
+function formatData(data) {
+  return `
+    <p class="compact-p"><strong>Index:</strong> ${data.Index}</p>
+    <p class="compact-p"><strong>Description 1:</strong> ${data.Description1}</p>
+    <p class="compact-p"><strong>Image Type:</strong> ${data.ImageType}</p>
+    <p class="compact-p"><strong>Coordinates:</strong></p>
+    <p class="compact-p">${data.Coord1} ${data.Coord2}  ${data.Coord3} ${data.Coord4}</p>
+    <p><strong>Values:</strong></p>
+    <ul>
+      <li>Z um top: ${data.Z_um_top}</li>
+      <li>Z um bottom: ${data.Z_um_bottom}</li>
+      <li>fov_X: ${data.fov_X}</li>
+      <li>fov_Y: ${data.fov_Y}</li>
+      <li># Slices: ${data.slices}</li>
+    </ul>
+  `;
+}
+
+
+function handleMouseOut(d, i, nodes) {
+  // console.log(this);
+  //d3.select(node).attr('stroke', 'transparent');
+  var node = nodes[i];
+  //  d3.select(node).attr('stroke', 'green');
+}
 
 function formatForD3(inputData, scaling = 1) {
   function parseCoord(coordStr) {
@@ -36,18 +70,20 @@ function formatForD3(inputData, scaling = 1) {
   ];
 }
 
+let overlayColorMap = { 'confocal image': 'red', 'macroscopic image': 'green', 'vivablock': 'blue', 'vivastack': 'pink' }
+
 
 function addOverlay(rcmDataList, overlay) {
   $.each(rcmDataList, function (index, rcmView) {
     //var fillColor = d3.schemeCategory20[index % 20];
     // console.log(index, tile, fillColor);
-    console.log(rcmView)
+    //console.log(rcmView)
     //Determine the color based on the ImageType
-    var fillColor = 'green';
-
-    if (rcmView.ImageType == 'confocal image') {
-      fillColor = 'blue'
-    }
+    var fillColor = overlayColorMap[rcmView.ImageType];
+    console.log(fillColor)
+    // if (rcmView.ImageType == 'confocal image') {
+    //   fillColor = 'blue'
+    // }
     var rcmBoundaryPoints = formatForD3(rcmView, 100000);
 
     let pointsString = rcmBoundaryPoints.map(point => `${point.x},${point.y}`).join(' ');
@@ -61,11 +97,11 @@ function addOverlay(rcmDataList, overlay) {
       .attr('class', 'boundaryClass')
       .attr('stroke', fillColor)
       .attr('stroke-width', 0.005)
-      .attr('opacity', 0.25);
-    //      .attr('id', 'boundaryLI' + tile.properties.labelindex)
-    //   .on('mouseover', handleMouseOver);
+      .attr('opacity', 0.5)
+      .on('mouseover', handleMouseOver)
+      .on('mouseout', handleMouseOut)
+      .attr("layerInfo", JSON.stringify(rcmView));
 
-    //self.deselectCell(node);
   });
 }
 
@@ -90,45 +126,6 @@ function parseCSV(url, callback) {
 
 
 
-function drawRectangles(data, overlay) {
-  console.log(data)
-  data.forEach((item, index) => {
-    // if (index === 0) return; // Skip the header row
-
-    let coord1 = transformCoordinates(JSON.parse(item.Coord1));
-    let coord2 = transformCoordinates(JSON.parse(item.Coord2));
-    let coord3 = transformCoordinates(JSON.parse(item.Coord3));
-    let coord4 = transformCoordinates(JSON.parse(item.Coord4));
-
-
-    const coordinates = [
-      coord1, coord2, coord3, coord4];
-    //console.log(coordinates)
-    const color = getColorBasedOnRow(index); // A function to get color based on row index or any other criteria
-
-    createCSVRectangle(overlay, coordinates, color);
-  });
-}
-
-
-function createCSVRectangle(overlay, coordinates, color, description) {
-  // Coordinates are in the format [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
-  const [x, y] = coordinates[0];
-  const [width, height] = [Math.abs(coordinates[0][0] - coordinates[1][0]), Math.abs(coordinates[0][1] - coordinates[2][1])];
-
-  DSA.createSVGElement('rect', overlay.node(), {
-    x: x,
-    y: y,
-    width: width,
-    height: height,
-    stroke: color,
-    fill: 'none',
-    'stroke-width': 0.005,
-    'pointer-events': 'all',
-    title: description
-  });
-}
-
 function showTooltip(point, text) {
   const tooltip = document.getElementById('tooltip');
   tooltip.style.left = point.x + 'px';
@@ -142,12 +139,10 @@ function hideTooltip() {
   tooltip.style.display = 'none';
 }
 
-
-
-function getColorBasedOnRow(index) {
-  // Define your logic to return different colors based on the row index or any other criteria
-  return index % 2 === 0 ? 'red' : 'blue';
-}
+// function getColorBasedOnRow(index) {
+//   // Define your logic to return different colors based on the row index or any other criteria
+//   return index % 2 === 0 ? 'red' : 'blue';
+// }
 
 
 (function () {
@@ -177,11 +172,23 @@ function getColorBasedOnRow(index) {
         element: document.querySelector('.overview-container'),
         tileSources: 'https://wsi-deid.pathology.emory.edu/api/v1/item/64e7679f309a9ffde668bd4a/tiles/dzi.dzi',
         prefixUrl: '/lib/openseadragon/images/',
-        maxZoomPixelRatio: 6,
+        maxZoomPixelRatio: 10,
         crossOriginPolicy: 'Anonymous',
         zoomPerClick: 1,
         //width: 100000
       });
+
+      // this.OverviewTracker = new OpenSeadragon.MouseTracker({
+      //   element: this.overview.element,
+      //   moveHandler: function (event) {
+      //     self.mouse = event.position;
+      //     // self.updateStats();
+      //     //console.log(event)
+      //     //          self.throttledUpdateGridValue();
+      //   },
+      // });
+
+
 
       var overlay = this.overview.svgOverlay();
 
@@ -190,28 +197,10 @@ function getColorBasedOnRow(index) {
         self.startViewer(0);
       });
 
-      // function addOverlay(rcmObjects) {
-      //   $.each(rcmObjects, function (index, tile) {
-      //     var fillColor = d3.schemeCategory20[index % 20];
-      //     // console.log(index, tile, fillColor);
-      //     console.log(tile)
-      //     // var node = d3
-      //     //   .select(overlay.node())
-      //     //   .append('polygon')
-      //     //   .style('fill', fillColor)
-      //     //   .attr('points', tile.geometry.coordinates.join(' '))
-      //     //   .attr('class', 'boundaryClass')
-      //     //   .attr('id', 'boundaryLI' + tile.properties.labelindex)
-      //     //   .on('mouseover', handleMouseOver);
-
-      //     // self.deselectCell(node);
-      //   });
-      // }
-
 
       parseCSV('/js/regExampleData.csv', function (data) {
         // Draw rectangles on the overlay image using the parsed data
-        //drawRectangles(data, overlay);
+        //TO DO: ADD A GRID WHERE YOU CAN BROWSE THIS DATA IN AA SEPARATE TAB
         addOverlay(data, overlay);
       });
 
@@ -279,6 +268,8 @@ function getColorBasedOnRow(index) {
 
     startViewer: function (index) {
       var self = this;
+
+
       if (index === this.viewerStateIndex) {
         return;
       }
@@ -296,6 +287,9 @@ function getColorBasedOnRow(index) {
         this.viewer.destroy();
       }
 
+      this.$stats = $('.coordinates-panel');
+
+
       this.viewer = new DSA.OverlaidViewer({
         container: document.querySelector('.viewer-container'),
         state: state,
@@ -305,12 +299,26 @@ function getColorBasedOnRow(index) {
         },
         onOpen: function () {
           self.updateLayer();
-        }
+        },
+        onZoom: function () {
+          //console.log("Zoom changing...")
+          self.updateStats();
+        },
+
       });
-      // Add this somewhere in your initialization code
-      //this.viewer.addHandler('mousemove', mouseMoveHandler);
 
 
+      console.log(this)
+      this.tracker = new OpenSeadragon.MouseTracker({
+        element: this.viewer._viewer.element,
+        moveHandler: function (event) {
+          //console.log(event)
+          self.mouse = event.position;
+          console.log(event.position)
+          self.updateStats();
+          //          self.throttledUpdateGridValue();
+        },
+      });
 
       this.$layerSlider.attr({
         min: 0,
@@ -365,8 +373,6 @@ function getColorBasedOnRow(index) {
         }
       });
 
-
-
       this.addSlider({
         container: this.$layers,
         label: 'Hue',
@@ -383,11 +389,24 @@ function getColorBasedOnRow(index) {
     },
 
 
-
-
     update: function () {
       this.viewer.setState(this.viewerState);
-    }
+    },
+    updateStats: function () {
+      var stats = '';
+      var zoom = this.viewer.getZoom();
+
+      stats += 'Zoom: ' + zoom;
+      if (this.mouse) {
+        stats += ', Mouse: ' + Math.round(this.mouse.x) + ',' + Math.round(this.mouse.y);
+      }
+      console.log(this)
+      document.getElementById('coordinates-panel').innerHTML = stats;
+      //      this.$stats.text(stats);
+    },
+
+
+
   });
 
   // ----------
@@ -395,41 +414,3 @@ function getColorBasedOnRow(index) {
     App.init();
   }, 1);
 })();
-
-
- // this.addSlider({
-      //   container: this.$layers,
-      //   label: 'imgProcess',
-      //   min: 1,
-      //   max: 9,
-      //   step: 2,
-      //   value: this.viewerState.layers[index].imgProcess,
-      //   onChange: function (value) {
-      //     self.viewerState.layers[index].imgProcess = value;
-      //     self.update();
-      //   }
-      // });
-
-       // addCheckbox: function (index) {
-    //   var self = this;
-    //   var layers = document.querySelector('.layers');
-
-    //   var div = document.createElement('div');
-    //   layers.appendChild(div);
-
-    //   var label = document.createElement('label');
-    //   div.appendChild(label);
-
-    //   var checkbox = document.createElement('input');
-    //   checkbox.type = 'checkbox';
-    //   checkbox.checked = true;
-    //   label.appendChild(checkbox);
-
-    //   var labelText = document.createTextNode(' Layer ' + (index + 1));
-    //   label.appendChild(labelText);
-
-    //   label.addEventListener('click', function () {
-    //     self.viewerState.layers[index].shown = !!checkbox.checked;
-    //     self.update();
-    //   });
-    // },
